@@ -92,7 +92,7 @@ public class SimpleLoadBalancer {
         event.setResult(ServerPreConnectEvent.ServerResult.denied());
         event.getPlayer().createConnectionRequest(smallestServer).connect();
       } else if (smallestServer == originalServer) {
-        LOGGER.warn("Player connecting to optimal server");
+        LOGGER.info("Player connecting to optimal server");
       } else {
         LOGGER.warn("No available servers to connect player to");
       }
