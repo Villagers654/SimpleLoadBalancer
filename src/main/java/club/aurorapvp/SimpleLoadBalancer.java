@@ -59,11 +59,12 @@ public class SimpleLoadBalancer {
   }
 
   @Subscribe
-  public void onServerPreConnectEvent(ServerPreConnectEvent event) {
-    String preServerName = event.getOriginalServer().getServerInfo().getName();
+  public void onServerConnect(ServerPreConnectEvent event) {
+    RegisteredServer originalServer = event.getOriginalServer();
+    String originalServerName = originalServer.getServerInfo().getName();
 
-    if (config.contains(preServerName)) {
-      List<String> serverNames = config.getStringList(preServerName);
+    if (config.contains(originalServerName)) {
+      List<String> serverNames = config.getStringList(originalServerName);
       connectedPlayers.clear();
 
       for (String serverName : serverNames) {
@@ -83,13 +84,15 @@ public class SimpleLoadBalancer {
         }
       }
 
-      if (smallestServer != null) {
+      if (smallestServer != null && smallestServer != originalServer) {
         LOGGER.info("Attempting to redirect {} <{}> to {}",
             event.getPlayer().getGameProfile().getName(),
             event.getPlayer().getUniqueId().toString(),
             smallestServer.getServerInfo().getName());
         event.setResult(ServerPreConnectEvent.ServerResult.denied());
-        event.getPlayer().createConnectionRequest(smallestServer).fireAndForget();
+        event.getPlayer().createConnectionRequest(smallestServer).connect();
+      } else if (smallestServer == originalServer) {
+        LOGGER.warn("Player connecting to optimal server");
       } else {
         LOGGER.warn("No available servers to connect player to");
       }
