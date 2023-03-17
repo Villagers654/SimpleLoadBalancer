@@ -75,8 +75,20 @@ public class SimpleLoadBalancer {
       connectedPlayers.clear();
 
       for (String serverName : serverNames) {
-        server.getServer(serverName).ifPresent(childServer -> connectedPlayers.put(childServer,
-            childServer.getPlayersConnected().size()));
+        server.getServer(serverName).ifPresent(childServer -> {
+          CompletableFuture<ServerPing> pingFuture = childServer.ping();
+
+          try {
+            ServerPing ping = pingFuture.get();
+            if (ping != null && ping.getVersion() != null) {
+              connectedPlayers.put(childServer, childServer.getPlayersConnected().size());
+            } else {
+              LOGGER.warn("Server " + serverName + " is not online, skipping.");
+            }
+          } catch (InterruptedException | ExecutionException e) {
+            LOGGER.warn("Failed to ping server " + serverName, e);
+          }
+        });
       }
 
       RegisteredServer smallestServer = null;
@@ -85,6 +97,7 @@ public class SimpleLoadBalancer {
       for (Map.Entry<RegisteredServer, Integer> entry : connectedPlayers.entrySet()) {
         RegisteredServer server = entry.getKey();
         int key = entry.getValue();
+
         if (key < smallestKey) {
           smallestKey = key;
           smallestServer = server;
