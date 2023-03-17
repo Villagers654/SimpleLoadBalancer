@@ -9,12 +9,15 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.proxy.server.ServerPing;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 
 @Plugin(
@@ -60,6 +63,10 @@ public class SimpleLoadBalancer {
 
   @Subscribe
   public void onServerConnect(ServerPreConnectEvent event) {
+    if (event.getPlayer().hasPermission("simpleloadbalancer.bypass")) {
+      return;
+    }
+
     RegisteredServer originalServer = event.getOriginalServer();
     String originalServerName = originalServer.getServerInfo().getName();
 
